@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="pages/components/fig-assets.css">
+<style>
+  body { margin:0; background:#E5E5E5; font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif; }
+  a { color:#005BEA; } a:hover { color:#00C6FB; }
+</style>
+</helmet>
+<div style="padding:40px; display:flex; flex-direction:column; gap:48px">
+  <div style="display:flex; align-items:baseline; gap:16px">
+    <h1 style="margin:0; font-size:20px; font-weight:600; color:#303F49">Components</h1>
+    <span style="font-size:13px; color:#8A9BA8">библиотека компонентов · <a href="Index.dc.html">все страницы</a></span>
+  </div>
+  <div style="display:flex; flex-wrap:wrap; gap:56px; align-items:flex-start">
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Colors</span><x-import component-from-global-scope="Colors" from="./pages/components/Components.bundle.js" hint-size="400px,200px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Top</span><x-import component-from-global-scope="Top" from="./pages/components/Components.bundle.js" hint-size="390px,100px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Tabbar</span><x-import component-from-global-scope="Tabbar" from="./pages/components/Components.bundle.js" hint-size="390px,100px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Tabbar-Mini</span><x-import component-from-global-scope="TabbarMini" from="./pages/components/Components.bundle.js" hint-size="390px,100px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Btn-Main</span><x-import component-from-global-scope="BtnMain" from="./pages/components/Components.bundle.js" hint-size="200px,200px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Button</span><x-import component-from-global-scope="Button" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Button-Reset</span><x-import component-from-global-scope="ButtonReset" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Icon</span><x-import component-from-global-scope="Icon" from="./pages/components/Components.bundle.js" hint-size="48px,48px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Icon2</span><x-import component-from-global-scope="Icon2" from="./pages/components/Components.bundle.js" hint-size="48px,48px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Input-Search</span><x-import component-from-global-scope="InputSearch" from="./pages/components/Components.bundle.js" hint-size="358px,44px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Checkbox</span><x-import component-from-global-scope="Checkbox" from="./pages/components/Components.bundle.js" hint-size="32px,32px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Switch</span><x-import component-from-global-scope="Switch" from="./pages/components/Components.bundle.js" hint-size="60px,32px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Switch-Item</span><x-import component-from-global-scope="SwitchItem" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Server-Item</span><x-import component-from-global-scope="ServerItem" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">App-Item</span><x-import component-from-global-scope="AppItem" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Apps</span><x-import component-from-global-scope="Apps" from="./pages/components/Components.bundle.js" hint-size="48px,48px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Settings-Item</span><x-import component-from-global-scope="SettingsItem" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">About-Item</span><x-import component-from-global-scope="AboutItem" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Theme-Item</span><x-import component-from-global-scope="ThemeItem" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Sub</span><x-import component-from-global-scope="Sub" from="./pages/components/Components.bundle.js" hint-size="358px,120px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Sub2</span><x-import component-from-global-scope="Sub2" from="./pages/components/Components.bundle.js" hint-size="358px,120px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Promo</span><x-import component-from-global-scope="Promo" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Payment</span><x-import component-from-global-scope="Payment" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Payment-Item</span><x-import component-from-global-scope="PaymentItem" from="./pages/components/Components.bundle.js" hint-size="358px,56px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Payment-Icon</span><x-import component-from-global-scope="PaymentIcon" from="./pages/components/Components.bundle.js" hint-size="48px,32px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Pay-Logos</span><x-import component-from-global-scope="PayLogos" from="./pages/components/Components.bundle.js" hint-size="120px,32px"></x-import></div>
+    <div style="display:flex; flex-direction:column; gap:8px"><span style="font-size:12px; color:#8A9BA8">Flags</span><x-import component-from-global-scope="Flags" from="./pages/components/Components.bundle.js" hint-size="32px,32px"></x-import></div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+@font-face{ font-family:'CustomIcons'; src:url('assets/fonts/CustomIcons.ttf') format('truetype'); }
+body{ margin:0; }
+</style>
+</helmet>
+
+<div style="width:100%;min-height:844px;display:flex;align-items:flex-start;justify-content:center;background:#E7E9EC;padding:40px 0;font-family:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div style="width:390px;height:844px;background:#F8F9FA;border-radius:40px;overflow:hidden;position:relative;box-shadow:0 30px 60px rgba(0,0,0,0.25);display:flex;flex-direction:column;">
+
+  <!-- ===== HOME / MainPage ===== -->
+  <sc-if value="{{ tab === 2 }}">
+  <div style="display:flex;flex-direction:column;height:100%;">
+    <div style="height:52px;display:flex;align-items:center;justify-content:center;background:#F8F9FA;flex-shrink:0;">
+      <div style="color:#303F49;font-size:24px;font-weight:600;">VPN Client</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;">
+      <!-- StatBar -->
+      <div style="display:flex;justify-content:space-evenly;margin-top:8px;">
+        <div style="width:100px;height:75px;background:#FFFFFF;border-radius:12px;box-shadow:0 1px 32px rgba(156,178,194,0.1);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#303F49;display:flex;align-items:center;justify-content:center;"><span style="font-family:'CustomIcons';font-size:14px;color:#fff;">&#xe801;</span></div>
+          <div style="margin-top:6px;font-size:14px;font-weight:500;color:#303F49;">{{ stats.down }}</div>
+        </div>
+        <div style="width:100px;height:75px;background:#FFFFFF;border-radius:12px;box-shadow:0 1px 32px rgba(156,178,194,0.1);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#303F49;display:flex;align-items:center;justify-content:center;"><span style="font-family:'CustomIcons';font-size:14px;color:#fff;">&#xe802;</span></div>
+          <div style="margin-top:6px;font-size:14px;font-weight:500;color:#303F49;">{{ stats.up }}</div>
+        </div>
+        <div style="width:100px;height:75px;background:#FFFFFF;border-radius:12px;box-shadow:0 1px 32px rgba(156,178,194,0.1);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#303F49;display:flex;align-items:center;justify-content:center;"><span style="font-family:'CustomIcons';font-size:14px;color:#fff;">&#xe800;</span></div>
+          <div style="margin-top:6px;font-size:14px;font-weight:500;color:#303F49;">{{ stats.ping }}</div>
+        </div>
+      </div>
+
+      <!-- MainBtn -->
+      <div style="display:flex;flex-direction:column;align-items:center;margin-top:20px;">
+        <div style="font-size:40px;font-weight:600;color:{{ timeColor }};">{{ timeText }}</div>
+        <div style="height:70px;"></div>
+        <div onClick="{{ handleConnection }}" style="width:150px;height:150px;position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;width:150px;height:150px;border-radius:50%;background:#D8D8D8;"></div>
+          <div style="position:absolute;width:{{ btnSize }}px;height:{{ btnSize }}px;border-radius:50%;background:linear-gradient(180deg,#00C6FB,#005BEA);transition:width 1s ease,height 1s ease;"></div>
+          <span style="position:relative;font-family:'CustomIcons';color:#fff;font-size:44px;">&#9211;</span>
+        </div>
+        <div style="height:20px;"></div>
+        <div style="font-size:16px;font-weight:500;color:#000;">{{ statusLabel }}</div>
+      </div>
+
+      <!-- LocationWidget -->
+      <div style="margin:30px;padding:0 14px;background:#FFFFFF;border-radius:12px;display:flex;align-items:center;height:88px;">
+        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
+          <div style="font-size:14px;font-weight:400;color:#A2A2A2;">Your Location</div>
+          <div style="font-size:17px;font-weight:400;color:#303F49;">{{ locationName }}</div>
+        </div>
+        <div style="flex:1;"></div>
+        <img src="{{ locationIcon }}" style="width:48px;height:48px;" />
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== SERVERS PAGE ===== -->
+  <sc-if value="{{ tab === 1 }}">
+  <div style="display:flex;flex-direction:column;height:100%;">
+    <div style="height:52px;display:flex;align-items:center;justify-content:center;background:#F8F9FA;flex-shrink:0;position:relative;">
+      <div style="color:#303F49;font-size:24px;font-weight:600;">Selected server</div>
+      <div onClick="{{ openServerSearch }}" style="position:absolute;right:20px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#303F49;font-size:20px;">&#8981;</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:0 30px;">
+      <div style="margin:10px 0 0 10px;color:#9A9A9A;font-size:14px;">Selected server</div>
+      <sc-for list="{{ selectedServers }}" as="s" hint-placeholder-count="1">
+        <div onClick="{{ s.onTap }}" style="height:52px;margin:8px 0;background:#FFFFFF;border-radius:10px;box-shadow:0 1px 10px rgba(128,128,128,0.15);display:flex;align-items:center;justify-content:space-between;padding:0 8px;cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <img src="{{ s.icon }}" style="width:44px;height:44px;" />
+            <div style="font-size:16px;color:#000;">{{ s.text }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div style="font-size:14px;color:#9A9A9A;">{{ s.pingText }}</div>
+            <sc-if value="{{ s.showPingIcon }}"><img src="{{ s.pingImg }}" style="width:36px;height:36px;" /></sc-if>
+          </div>
+        </div>
+      </sc-for>
+      <div style="margin:16px 0 0 10px;color:#9A9A9A;font-size:14px;">All servers</div>
+      <sc-for list="{{ otherServers }}" as="s" hint-placeholder-count="3">
+        <div onClick="{{ s.onTap }}" style="height:52px;margin:8px 0;background:#FFFFFF;border-radius:10px;box-shadow:0 1px 10px rgba(128,128,128,0.15);display:flex;align-items:center;justify-content:space-between;padding:0 8px;cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <img src="{{ s.icon }}" style="width:44px;height:44px;" />
+            <div style="font-size:16px;color:#000;">{{ s.text }}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div style="font-size:14px;color:#9A9A9A;">{{ s.pingText }}</div>
+            <sc-if value="{{ s.showPingIcon }}"><img src="{{ s.pingImg }}" style="width:36px;height:36px;" /></sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== APPS PAGE ===== -->
+  <sc-if value="{{ tab === 0 }}">
+  <div style="display:flex;flex-direction:column;height:100%;">
+    <div style="height:52px;display:flex;align-items:center;justify-content:center;background:#F8F9FA;flex-shrink:0;position:relative;">
+      <div style="color:#303F49;font-size:24px;font-weight:600;">App Selection</div>
+      <div onClick="{{ openAppSearch }}" style="position:absolute;right:20px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#303F49;font-size:20px;">&#8981;</div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:8px 30px 0 30px;">
+      <sc-for list="{{ appsList }}" as="a" hint-placeholder-count="5">
+        <div onClick="{{ a.onTap }}" style="height:52px;margin:8px 0;background:#FFFFFF;border-radius:10px;box-shadow:0 1px 10px rgba(128,128,128,0.15);display:flex;align-items:center;justify-content:space-between;padding:0 8px;position:relative;cursor:pointer;opacity:{{ a.opacity }};">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <sc-if value="{{ a.image }}"><img src="{{ a.image }}" style="width:40px;height:40px;border-radius:8px;" /></sc-if>
+            <sc-if value="{{ a.noImage }}"><div style="width:16px;"></div></sc-if>
+            <div style="font-size:16px;color:#000;">{{ a.text }}</div>
+          </div>
+          <sc-if value="{{ a.isSwitch }}">
+            <div style="width:40px;height:24px;border-radius:12px;background:{{ a.switchBg }};position:relative;">
+              <div style="position:absolute;top:2px;left:{{ a.knobLeft }}px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left 0.15s;"></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ a.isCheckbox }}">
+            <div style="width:22px;height:22px;border-radius:5px;background:{{ a.checkBg }};display:flex;align-items:center;justify-content:center;">
+              <sc-if value="{{ a.isActive }}"><span style="color:#fff;font-size:14px;">&#10003;</span></sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== SPEED / SETTINGS PLACEHOLDERS ===== -->
+  <sc-if value="{{ tab === 3 }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;color:#303F49;font-size:17px;">Speed Page</div>
+  </sc-if>
+  <sc-if value="{{ tab === 4 }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;color:#303F49;font-size:17px;">Settings Page</div>
+  </sc-if>
+
+  <!-- ===== NAV BAR ===== -->
+  <div style="height:60px;margin-bottom:30px;padding:0 30px;background:#F8F9FA;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+    <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+      <div onClick="{{ n.onTap }}" style="width:66px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <img src="{{ n.icon }}" style="width:{{ n.size }}px;height:{{ n.size }}px;" />
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- ===== SEARCH DIALOG OVERLAY ===== -->
+  <sc-if value="{{ searchOpen }}">
+  <div style="position:absolute;inset:0;background:#F8F9FA;display:flex;flex-direction:column;padding:14px 14px 0 14px;">
+    <div style="position:relative;display:flex;align-items:center;justify-content:center;height:30px;">
+      <div style="font-size:24px;font-weight:600;color:#303F49;">Search</div>
+      <sc-if value="{{ searchType === 1 }}">
+        <div onClick="{{ closeSearch }}" style="position:absolute;right:4px;color:#3B82F6;font-size:16px;cursor:pointer;">Done</div>
+      </sc-if>
+      <sc-if value="{{ searchType === 2 }}">
+        <div onClick="{{ closeSearch }}" style="position:absolute;left:4px;color:#3B82F6;font-size:16px;cursor:pointer;">Cancel</div>
+      </sc-if>
+    </div>
+    <div style="margin:14px 0 7px 0;background:#fff;border-radius:10px;box-shadow:0 1px 10px rgba(128,128,128,0.15);">
+      <input value="{{ searchQuery }}" onInput="{{ setSearchQuery }}" placeholder="{{ searchPlaceholder }}" style="width:100%;box-sizing:border-box;border:none;background:transparent;padding:14px;font-size:16px;color:#303F49;outline:none;" />
+    </div>
+    <div style="flex:1;overflow-y:auto;">
+      <sc-for list="{{ searchResults }}" as="r" hint-placeholder-count="4">
+        <div onClick="{{ r.onTap }}" style="height:52px;margin:8px 0;background:#FFFFFF;border-radius:10px;box-shadow:0 1px 10px rgba(128,128,128,0.15);display:flex;align-items:center;justify-content:space-between;padding:0 8px;cursor:pointer;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <sc-if value="{{ r.icon }}"><img src="{{ r.icon }}" style="width:{{ r.iconSize }}px;height:{{ r.iconSize }}px;{{ r.iconRadius }}" /></sc-if>
+            <div style="font-size:16px;color:#000;">{{ r.text }}</div>
+          </div>
+          <div style="font-size:14px;color:#9A9A9A;">{{ r.meta }}</div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ searchEmpty }}">
+        <div style="text-align:center;color:#303F49;margin-top:30px;">Nothing found</div>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    tab: 2,
+    status: 'disconnected', // disconnected | connecting | connected | disconnecting
+    seconds: 0,
+    stats: { down: '0 Mb/s', up: '0 Mb/s', ping: '0 ms' },
+    servers: [
+      { icon: 'assets/images/flags/auto.svg', text: 'Auto Select', ping: 'Fastest', isActive: true },
+      { icon: 'assets/images/flags/Kazahstan.svg', text: 'Kazakhstan', ping: '48', isActive: false },
+      { icon: 'assets/images/flags/Turkey.svg', text: 'Turkey', ping: '142', isActive: false },
+      { icon: 'assets/images/flags/Poland.svg', text: 'Poland', ping: '298', isActive: false },
+    ],
+    apps: [
+      { image: null, text: 'All Applications', isSwitch: true, isActive: false },
+      { image: 'assets/images/Instagram.png', text: 'Instagram', isSwitch: false, isActive: false },
+      { image: 'assets/images/TikTok.png', text: 'TikTok', isSwitch: false, isActive: true },
+      { image: 'assets/images/Twitter.png', text: 'X (Twitter)', isSwitch: false, isActive: false },
+      { image: 'assets/images/Amazon.png', text: 'Amazon', isSwitch: false, isActive: false },
+    ],
+    recent: { 1: [], 2: [] },
+    search: null, // { type, query }
+  };
+
+  _timer = null;
+  _statsTimer = null;
+
+  componentWillUnmount() {
+    clearInterval(this._timer);
+    clearInterval(this._statsTimer);
+  }
+
+  // ---- mock of VPNclientEngine calls ----
+  startTimer() {
+    clearInterval(this._timer);
+    this._timer = setInterval(() => {
+      this.setState((s) => ({ seconds: s.seconds + 1 }));
+    }, 1000);
+  }
+
+  stopTimer() {
+    clearInterval(this._timer);
+    this.setState({ seconds: 0 });
+  }
+
+  startStats() {
+    clearInterval(this._statsTimer);
+    this._statsTimer = setInterval(() => {
+      this.setState({
+        stats: {
+          down: (Math.random() * 40 + 2).toFixed(1) + ' Mb/s',
+          up: (Math.random() * 12 + 1).toFixed(1) + ' Mb/s',
+          ping: Math.floor(Math.random() * 60 + 20) + ' ms',
+        },
+      });
+    }, 1500);
+  }
+
+  stopStats() {
+    clearInterval(this._statsTimer);
+    this.setState({ stats: { down: '0 Mb/s', up: '0 Mb/s', ping: '0 ms' } });
+  }
+
+  _handleConnection = () => {
+    const { status } = this.state;
+    if (status !== 'connected' && status !== 'disconnected') return;
+
+    if (status === 'disconnected') {
+      this.setState({ status: 'connecting' });
+      // mock: VPNclientEngine.ClearSubscriptions / addSubscription / updateSubscription / pingServer / connect
+      setTimeout(() => {
+        this.startTimer();
+        this.startStats();
+        this.setState({ status: 'connected' });
+      }, 1200);
+    } else {
+      this.setState({ status: 'disconnecting' });
+      // mock: VPNclientEngine.disconnect
+      setTimeout(() => {
+        this.stopTimer();
+        this.stopStats();
+        this.setState({ status: 'disconnected' });
+      }, 900);
+    }
+  };
+
+  _onServerTapped(index) {
+    this.setState((s) => ({
+      servers: s.servers.map((sv, i) => ({ ...sv, isActive: i === index })),
+    }));
+  }
+
+  _onAppTapped(index) {
+    this.setState((s) => {
+      const apps = s.apps.map((a) => ({ ...a }));
+      if (index === 0) {
+        apps[0].isActive = !apps[0].isActive;
+      } else {
+        apps[index].isActive = !apps[index].isActive;
+        if (apps[index].isActive) apps[0].isActive = false;
+      }
+      return { apps };
+    });
+  }
+
+  pingImage(ping) {
+    const v = parseInt(ping, 10);
+    if (!isNaN(v)) {
+      if (v > 200) return 'assets/images/ping_status_3.png';
+      if (v > 100) return 'assets/images/ping_status_2.png';
+    }
+    return 'assets/images/ping_status_1.png';
+  }
+
+  formatTime(seconds) {
+    const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
+  }
+
+  _openSearch(type) {
+    this.setState({ search: { type, query: '' } });
+  }
+
+  _closeSearch = () => this.setState({ search: null });
+
+  _setSearchQuery = (e) => {
+    const query = e && e.target ? e.target.value : '';
+    this.setState((s) => ({ search: { ...s.search, query } }));
+  };
+
+  _pickServerFromSearch(text) {
+    this.setState((s) => ({
+      servers: s.servers.map((sv) => ({ ...sv, isActive: sv.text === text })),
+      search: null,
+    }));
+  }
+
+  _pickAppFromSearch(text) {
+    this._onAppTapped(this.state.apps.findIndex((a) => a.text === text));
+  }
+
+  renderVals() {
+    const { tab, status, seconds, stats, servers, apps, search } = this.state;
+
+    const statusLabel = {
+      disconnected: 'DISCONNECTED',
+      connecting: 'CONNECTING',
+      connected: 'CONNECTED',
+      disconnecting: 'DISCONNECTING',
+    }[status];
+
+    const activeServer = servers.find((s) => s.isActive);
+
+    const buildServerRow = (s) => ({
+      ...s,
+      pingText: /^\d+$/.test(s.ping) ? `${s.ping} ms` : s.ping,
+      showPingIcon: s.ping.length > 0,
+      pingImg: this.pingImage(s.ping),
+      onTap: () => this._onServerTapped(servers.indexOf(s)),
+    });
+
+    const navDefs = [
+      { tabIdx: 0, inactive: 'assets/images/app.svg', active: 'assets/images/active_app.svg' },
+      { tabIdx: 1, inactive: 'assets/images/server.svg', active: 'assets/images/active_server.svg' },
+      { tabIdx: 2, inactive: 'assets/images/home.svg', active: 'assets/images/active_home.svg' },
+      { tabIdx: 3, inactive: 'assets/images/speed.svg', active: 'assets/images/speed.svg' },
+      { tabIdx: 4, inactive: 'assets/images/settings.svg', active: 'assets/images/settings.svg' },
+    ];
+
+    const navItems = navDefs.map((n) => ({
+      icon: tab === n.tabIdx ? n.active : n.inactive,
+      size: tab === n.tabIdx ? 34 : 26,
+      onTap: () => this.setState({ tab: n.tabIdx }),
+    }));
+
+    const appsList = apps.map((a, i) => {
+      const enabled = i === 0 || !apps[0].isActive;
+      return {
+        ...a,
+        noImage: !a.image,
+        opacity: enabled ? 1 : 0.4,
+        isCheckbox: !a.isSwitch,
+        switchBg: a.isActive ? '#303F49' : '#E0E0E0',
+        knobLeft: a.isActive ? 18 : 2,
+        checkBg: a.isActive ? '#303F49' : '#E0E0E0',
+        onTap: enabled ? () => this._onAppTapped(i) : undefined,
+      };
+    });
+
+    let searchResults = [];
+    let searchEmpty = false;
+    let searchPlaceholder = '';
+    if (search) {
+      const q = search.query.toLowerCase();
+      if (search.type === 1) {
+        searchPlaceholder = 'App name';
+        searchResults = apps
+          .filter((a) => a.text.toLowerCase().includes(q))
+          .map((a) => ({
+            icon: a.image,
+            iconSize: 40,
+            iconRadius: 'border-radius:8px;',
+            text: a.text,
+            meta: a.isActive ? 'On' : '',
+            onTap: () => this._pickAppFromSearch(a.text),
+          }));
+      } else {
+        searchPlaceholder = 'Country name';
+        searchResults = servers
+          .filter((s) => s.text.toLowerCase().includes(q))
+          .map((s) => ({
+            icon: s.icon,
+            iconSize: 36,
+            iconRadius: '',
+            text: s.text,
+            meta: /^\d+$/.test(s.ping) ? `${s.ping} ms` : s.ping,
+            onTap: () => this._pickServerFromSearch(s.text),
+          }));
+      }
+      searchEmpty = searchResults.length === 0;
+    }
+
+    return {
+      tab,
+      navItems,
+      statusLabel,
+      timeText: this.formatTime(seconds),
+      timeColor: status === 'connected' ? '#303F49' : '#A2A2A2',
+      btnSize: status === 'connected' || status === 'connecting' ? 150 : 0,
+      handleConnection: this._handleConnection,
+      stats,
+      locationName: activeServer ? activeServer.text : '...',
+      locationIcon: activeServer ? activeServer.icon : 'assets/images/flags/auto.svg',
+      selectedServers: servers.filter((s) => s.isActive).map(buildServerRow),
+      otherServers: servers.filter((s) => !s.isActive).map(buildServerRow),
+      appsList,
+      openServerSearch: () => this._openSearch(2),
+      openAppSearch: () => this._openSearch(1),
+      searchOpen: !!search,
+      searchType: search ? search.type : 0,
+      searchQuery: search ? search.query : '',
+      searchPlaceholder,
+      searchResults,
+      searchEmpty,
+      closeSearch: this._closeSearch,
+      setSearchQuery: this._setSearchQuery,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

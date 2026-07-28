@@ -1,0 +1,53 @@
+name: vpn_client
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.12+12
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.0.0
+  flutter_svg: ^2.0.17
+  flutter_localizations:
+    sdk: flutter
+  shared_preferences: ^2.2.3
+  flutter_native_splash: ^2.3.1
+  flutter_bloc: ^9.0.0
+  # NOTE: the real vpnclient_engine_flutter plugin (native VPN engine) has
+  # been removed for this design prototype. All calls that used to hit it
+  # now go through lib/mock/vpnclient_engine_mock.dart instead, which keeps
+  # the exact same class/method names (VPNclientEngine.connect, .disconnect,
+  # .addSubscription, .updateSubscription, .pingServer, .onPingResult) but
+  # returns fake data instead of talking to a real VPN core.
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  fonts:
+    - family: CustomIcons
+      fonts:
+        - asset: assets/fonts/CustomIcons.ttf
+
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/images/flags/
+    - assets/images/payment/
+    - assets/lang/
+
+  generate: true
+
+l10n:
+  arb-dir: lib/l10n
+  template-arb-file: app_en.arb
+  output-localization-file: app_localizations.dart

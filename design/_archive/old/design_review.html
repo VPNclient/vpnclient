@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>VPNclient — Design Review</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --brand-cyan: #00C6FB;
+    --brand-blue: #005BEA;
+    --bg: #F8F9FA;
+    --surface: #FFFFFF;
+    --text: #303F49;
+    --muted: #B6B6B6;
+    --divider: rgba(156,178,194,0.18);
+    --success: #1FB67A;
+    --warn: #FFB020;
+    --danger: #E5484D;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --gutter: 30px;
+    --font: -apple-system, "SF Pro Text", "SF Pro", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #EFF2F5; color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+  .page {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+  header.hero {
+    display: flex; align-items: end; justify-content: space-between;
+    margin-bottom: 28px; gap: 24px; flex-wrap: wrap;
+  }
+  header.hero h1 {
+    font-size: 32px; font-weight: 600; margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  header.hero p { margin: 0; color: #5b6770; max-width: 540px; line-height: 1.5; font-size: 15px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 999px; font-size: 13px;
+    background: linear-gradient(135deg, var(--brand-cyan), var(--brand-blue));
+    color: #fff;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+    gap: 28px;
+  }
+  .frame-wrap {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .frame-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 12px; color: #5b6770;
+    padding: 0 4px;
+  }
+  .frame-meta b { color: var(--text); font-weight: 600; font-size: 13px; }
+  .frame-meta .tag {
+    background: #fff; padding: 3px 8px; border-radius: 6px;
+    border: 1px solid var(--divider); font-size: 11px;
+    color: #5b6770;
+  }
+  .device {
+    width: 390px; height: 844px;
+    background: var(--bg);
+    border-radius: 44px;
+    box-shadow: 0 30px 80px rgba(15,30,40,0.12), 0 0 0 1px rgba(15,30,40,0.06);
+    overflow: hidden;
+    position: relative;
+    margin: 0 auto;
+  }
+  .device::before {
+    content: ""; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+    width: 110px; height: 30px; background: #000; border-radius: 999px; z-index: 30;
+  }
+  .status-bar {
+    height: 47px; padding: 14px 30px 0; display: flex; justify-content: space-between;
+    font-size: 16px; font-weight: 600; align-items: center;
+    color: var(--text); position: relative; z-index: 5;
+  }
+  .status-bar .icons { display: flex; gap: 5px; align-items: center; }
+  .status-bar .icons svg { width: 16px; height: 11px; }
+  .screen { padding: 0 var(--gutter); height: calc(100% - 47px); display: flex; flex-direction: column; position: relative; }
+  .top-row {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px; flex-shrink: 0;
+  }
+  .top-row .title { font-size: 17px; font-weight: 600; }
+  .top-row .left, .top-row .right { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text); }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    background: var(--surface); color: var(--text);
+  }
+  /* ─── Tab bar ─────────────────────────────── */
+  .tabbar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 84px; padding: 8px 24px 28px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    background: var(--bg); border-top: 1px solid var(--divider);
+  }
+  .tabbar .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    color: rgba(48,63,73,0.5); font-size: 11px;
+  }
+  .tabbar .tab.active { color: var(--brand-blue); }
+  .tabbar .tab svg { width: 22px; height: 22px; }
+  /* ─── Main ────────────────────────────────── */
+  .stat-row { display: flex; gap: 12px; margin-top: 20px; }
+  .stat {
+    flex: 1; background: var(--surface); border-radius: var(--radius); padding: 12px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    box-shadow: 0 2px 8px rgba(15,30,40,0.05);
+  }
+  .stat .ico {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(0,91,234,0.1); color: var(--brand-blue);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stat .v { font-size: 13px; color: var(--muted); }
+  .timer {
+    font-size: 56px; font-weight: 700; text-align: center;
+    line-height: 1; letter-spacing: -0.02em;
+  }
+  .timer.muted { color: var(--muted); }
+  .connect-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  .connect-btn {
+    width: 150px; height: 150px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; position: relative;
+  }
+  .connect-btn.off { background: #EFF2F5; color: var(--muted); }
+  .connect-btn.on {
+    background: linear-gradient(180deg, var(--brand-cyan), var(--brand-blue));
+    box-shadow: 0 18px 48px rgba(0,91,234,0.42), 0 0 0 1px rgba(0,91,234,0.05);
+  }
+  .connect-btn.on::after {
+    content: ""; position: absolute; inset: -14px; border-radius: 50%;
+    border: 2px solid rgba(0,198,251,0.35);
+    animation: pulse 1.6s ease-out infinite;
+  }
+  @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.6; } 100% { transform: scale(1.15); opacity: 0; } }
+  .conn-status { font-size: 16px; font-weight: 500; }
+  .server-card {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 16px; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 8px rgba(15,30,40,0.05);
+  }
+  .server-card .meta { flex: 1; }
+  .server-card .label { color: var(--muted); font-size: 13px; }
+  .server-card .name { font-size: 17px; margin-top: 2px; }
+  .flag {
+    width: 40px; height: 40px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+    background: #ECEFF1; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; color: var(--text); font-size: 12px;
+  }
+  .flag.auto {
+    background: linear-gradient(180deg, var(--brand-cyan), var(--brand-blue)); color: #fff;
+  }
+  /* ─── Servers list ────────────────────────── */
+  .sub-strip { display: flex; gap: 10px; overflow-x: auto; padding: 4px 0; margin: 8px 0 12px; }
+  .sub-card {
+    flex: 0 0 auto; width: 220px; height: 88px; border-radius: var(--radius-lg);
+    padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .sub-card.active { background: linear-gradient(135deg, var(--brand-cyan), var(--brand-blue)); color: #fff; }
+  .sub-card.inactive { background: var(--surface); color: var(--text); }
+  .sub-card .row1 { display: flex; align-items: center; gap: 6px; font-weight: 500; }
+  .sub-card .row2 { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.85; }
+  .sub-card.add {
+    width: 84px; align-items: center; justify-content: center;
+    border: 1px dashed var(--divider); color: var(--brand-blue); flex-direction: row;
+  }
+  .search {
+    background: var(--surface); border-radius: var(--radius); padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px; color: var(--muted);
+    margin-bottom: 12px; font-size: 15px;
+  }
+  .group-label { font-size: 13px; color: var(--muted); padding: 8px 14px 6px; }
+  .row {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    background: var(--surface); border-radius: var(--radius); margin-bottom: 6px;
+  }
+  .row .name { flex: 1; font-size: 17px; }
+  .ping { font-size: 13px; }
+  .ping.fast { color: var(--success); }
+  .ping.med { color: var(--warn); }
+  .ping.slow { color: var(--danger); }
+  .check {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--brand-blue);
+    color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px;
+  }
+  /* ─── Apps ────────────────────────────────── */
+  .seg {
+    display: flex; background: var(--surface); border-radius: var(--radius);
+    padding: 4px; margin: 12px 0; gap: 4px;
+  }
+  .seg .opt {
+    flex: 1; text-align: center; padding: 10px 0; border-radius: 8px;
+    font-size: 14px; color: var(--muted);
+  }
+  .seg .opt.active {
+    background: linear-gradient(180deg, var(--brand-cyan), var(--brand-blue));
+    color: #fff; font-weight: 500;
+  }
+  .switch {
+    width: 44px; height: 26px; border-radius: 999px; background: #E0E0E0;
+    position: relative; flex-shrink: 0; transition: background 0.2s;
+  }
+  .switch.on { background: var(--brand-blue); }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: left 0.2s;
+  }
+  .switch.on::after { left: 21px; }
+  .app-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: #ECEFF1; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 14px;
+  }
+  .row .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  /* ─── Settings ────────────────────────────── */
+  .profile {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 16px; display: flex; gap: 12px; align-items: center;
+    margin: 12px 0 20px;
+  }
+  .profile .avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(180deg, var(--brand-cyan), var(--brand-blue));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+  }
+  .profile .name { font-size: 17px; }
+  .profile .plan { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .section-label {
+    font-size: 12px; color: var(--muted); letter-spacing: 0.5px;
+    padding: 0 14px 6px; text-transform: uppercase;
+  }
+  .group {
+    background: var(--surface); border-radius: var(--radius);
+    margin-bottom: 16px; overflow: hidden;
+  }
+  .group .item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+    border-bottom: 1px solid var(--divider);
+  }
+  .group .item:last-child { border: 0; }
+  .group .ico {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: rgba(0,91,234,0.1); color: var(--brand-blue);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .group .item .label { flex: 1; font-size: 17px; }
+  .group .item .trail { color: var(--muted); font-size: 14px; }
+  .pro-pill {
+    background: linear-gradient(180deg, var(--brand-cyan), var(--brand-blue));
+    color: #fff; padding: 3px 10px; border-radius: 999px; font-size: 12px;
+  }
+  .reset-btn {
+    width: 100%; padding: 14px; border-radius: var(--radius);
+    border: 1px solid var(--divider); background: transparent;
+    color: var(--danger); font-size: 16px; font-family: var(--font);
+    margin-top: 8px;
+  }
+  /* ─── Subscription import ────────────────── */
+  .url-box {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 14px 16px; min-height: 92px;
+    color: var(--muted); font-size: 14px; line-height: 1.5;
+    margin-bottom: 8px; word-break: break-all;
+  }
+  .url-box .typed { color: var(--text); }
+  .chip-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 999px; background: rgba(0,91,234,0.1);
+    color: var(--brand-blue); font-size: 13px;
+  }
+  .field-label { font-size: 13px; color: var(--muted); padding: 0 4px 6px; }
+  .input {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 12px 16px; font-size: 15px; color: var(--text);
+  }
+  .input.placeholder { color: var(--muted); }
+  .toggle-row {
+    display: flex; align-items: center; padding: 12px 4px; gap: 12px;
+  }
+  .toggle-row .label { flex: 1; }
+  .toggle-row .label b { font-size: 16px; font-weight: 400; display: block; }
+  .toggle-row .label span { font-size: 12px; color: var(--muted); }
+  .cta {
+    width: 100%; padding: 16px; border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--brand-cyan), var(--brand-blue));
+    color: #fff; font-size: 17px; font-weight: 500; border: 0;
+    box-shadow: 0 8px 24px rgba(0,91,234,0.3);
+  }
+  .cta.disabled { background: #C8D4DC; box-shadow: none; }
+  .progress {
+    width: 100%; height: 4px; background: rgba(0,91,234,0.15); border-radius: 2px; overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress::after {
+    content: ""; display: block; width: 60%; height: 100%;
+    background: linear-gradient(90deg, var(--brand-cyan), var(--brand-blue));
+    animation: slide 1.4s ease-in-out infinite;
+  }
+  @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .toast {
+    background: rgba(31,182,122,0.12); padding: 12px 14px;
+    border-radius: var(--radius); display: flex; align-items: center; gap: 8px;
+    color: var(--text); font-size: 14px; margin-bottom: 12px;
+  }
+  /* ─── Tablet/Desktop ──────────────────────── */
+  .tablet-wrap {
+    grid-column: 1 / -1;
+  }
+  .tablet {
+    width: 100%; max-width: 1040px; aspect-ratio: 13 / 9;
+    background: var(--bg); border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(15,30,40,0.12), 0 0 0 1px rgba(15,30,40,0.06);
+    overflow: hidden; position: relative; display: flex; margin: 0 auto;
+  }
+  .rail {
+    width: 224px; padding: 32px 12px; flex-shrink: 0;
+    border-right: 1px solid var(--divider); display: flex; flex-direction: column; gap: 4px;
+  }
+  .rail .brand {
+    display: flex; align-items: center; gap: 12px; padding: 0 12px 24px;
+  }
+  .rail .brand .logo {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: linear-gradient(180deg, var(--brand-cyan), var(--brand-blue));
+  }
+  .rail .nav-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px;
+    border-radius: var(--radius); color: rgba(48,63,73,0.7); font-size: 16px;
+  }
+  .rail .nav-item.active { background: rgba(0,91,234,0.1); color: var(--brand-blue); font-weight: 500; }
+  .desktop-body { flex: 1; padding: 32px 48px; overflow-y: auto; }
+  .desktop-body h2 { font-size: 24px; font-weight: 600; margin: 0 0 24px; }
+  .desktop-grid {
+    display: grid; grid-template-columns: 320px 1fr; gap: 32px; height: calc(100% - 60px);
+  }
+
+  .group-divider {
+    height: 1px; background: var(--divider); margin: 0 14px;
+  }
+  /* ─── Dark variant overrides ────────────── */
+  .device.dark {
+    background: #0F1419; color: #E7ECEF;
+  }
+  .device.dark .stat,
+  .device.dark .server-card,
+  .device.dark .row,
+  .device.dark .group,
+  .device.dark .profile,
+  .device.dark .search,
+  .device.dark .seg,
+  .device.dark .url-box,
+  .device.dark .input,
+  .device.dark .sub-card.inactive {
+    background: #1A2129; color: #E7ECEF;
+  }
+  .device.dark .timer,
+  .device.dark .top-row .title,
+  .device.dark .conn-status,
+  .device.dark .server-card .name,
+  .device.dark .row .name,
+  .device.dark .profile .name,
+  .device.dark .group .item .label,
+  .device.dark .field-label,
+  .device.dark .url-box .typed { color: #E7ECEF; }
+  .device.dark .status-bar { color: #E7ECEF; }
+  .device.dark .tabbar { background: #0F1419; border-top-color: rgba(255,255,255,0.08); }
+  .device.dark .tabbar .tab { color: rgba(231,236,239,0.5); }
+  .device.dark .tabbar .tab.active { color: var(--brand-cyan); }
+  .device.dark .connect-btn.off { background: #222B33; color: rgba(231,236,239,0.5); }
+  .device.dark .flag { background: #222B33; color: #E7ECEF; }
+  .device.dark .group .ico { background: rgba(0,198,251,0.18); color: var(--brand-cyan); }
+  .device.dark .stat .ico { background: rgba(0,198,251,0.18); color: var(--brand-cyan); }
+  .device.dark .check { background: var(--brand-cyan); }
+  .device.dark .switch.on { background: var(--brand-cyan); }
+  .device.dark .group .item { border-bottom-color: rgba(255,255,255,0.06); }
+
+  /* nav icons */
+  .ic { width: 22px; height: 22px; flex-shrink: 0; }
+
+  .legend {
+    background: #fff; border-radius: 16px; padding: 22px 24px; margin-bottom: 28px;
+    box-shadow: 0 1px 3px rgba(15,30,40,0.05);
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px;
+  }
+  .legend h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+  .legend p { margin: 0; font-size: 13px; color: #5b6770; line-height: 1.5; }
+  .swatch-row { display: flex; gap: 8px; margin-top: 10px; }
+  .swatch { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--divider); }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <div>
+      <div class="badge">VPNclient · Flutter UI refresh</div>
+      <h1 style="margin-top:14px">Доработка верстки экранов</h1>
+      <p>Все основные пользовательские экраны (Main · Servers · Apps · Settings) переверстаны под Figma "VPN-Client-Pro Blue", добавлен экран импорта подписок и адаптивный layout под планшет/десктоп. Каждый макет — превью соответствующего Dart-файла в <code>flutter/lib/</code>.</p>
+    </div>
+  </header>
+
+  <div class="legend">
+    <div>
+      <h3>Палитра</h3>
+      <p>Бренд-градиент cyan → blue из Figma. Старый оранжевый удалён.</p>
+      <div class="swatch-row">
+        <div class="swatch" style="background:#00C6FB"></div>
+        <div class="swatch" style="background:#005BEA"></div>
+        <div class="swatch" style="background:#303F49"></div>
+        <div class="swatch" style="background:#F8F9FA"></div>
+        <div class="swatch" style="background:#B6B6B6"></div>
+      </div>
+    </div>
+    <div>
+      <h3>Типографика</h3>
+      <p>SF Pro Text. Шкала из Figma: 13/15/17 для тела, 24 Semibold для заголовков, 40 Bold для таймера.</p>
+    </div>
+    <div>
+      <h3>Spacing</h3>
+      <p>Page gutter 30px, row gutter 14px, radius 12/16, tile height 64.</p>
+    </div>
+    <div>
+      <h3>Локализация</h3>
+      <p>RU + EN с переключателем в Settings (через <code>LocaleProvider</code>). ZH/TH также подключены.</p>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <!-- ═══ MAIN OFF ════════════════════════════════════ -->
+    <div class="frame-wrap">
+      <div class="frame-meta">
+        <b>Main · Disconnected</b>
+        <span class="tag">main_page.dart</span>
+      </div>
+      <div class="device">
+        <div class="status-bar"><span>9:41</span><span class="icons">●●● ⌑</span></div>
+        <div class="screen">
+          <div class="top-row"><span class="left"></span><span class="title">VPNclient</span><span class="right">⋯</span></div>
+          <div class="stat-row">
+            <div class="stat"><div class="ico">↓</div><div class="v">0 MB/s</div></div>
+            <div class="stat"><div class="ico">↑</div><div class="v">0 MB/s</div></div>
+            <div class="stat"><div class="ico">⏱</div><div class="v">0 ms</div></div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:48px">
+            <div class="timer muted">00:00:00</div>
+            <div class="connect-wrap">
+              <div class="connect-btn off">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4v8M5.6 7.6a8 8 0 1 0 12.8 0"/></svg>
+              </div>
+              <div class="conn-status" style="color:var(--muted)">Отключено</div>
+            </div>
+          </div>
+          <div class="server-card" style="margin-bottom:108px">
+            <div class="meta">
+              <div class="label">Ваша локация</div>
+              <div class="name">Авто-выбор</div>
+            </div>
+            <div class="flag auto">⚡</div>
+          </div>
+          <div class="tabbar">
+            <div class="tab"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Servers</div>
+            <div class="tab active"><svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 6v6c0 5 3.4 9.3 8 10 4.6-.7 8-5 8-10V6l-8-4z"/></svg>Home</div>
+            <div class="tab"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>Apps</div>
+            <div class="tab"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>Settings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ MAIN ON ════════════════════════════════════ -->
+    <div class="frame-wrap">
+      <div class="frame-meta">
+        <b>Main · Connected</b>
+        <span class="tag">main_btn.dart</span>
+      </div>
+      <div class="device">
+        <div class="status-bar"><span>9:41</span><span class="icons">●●● ⌑</span></div>
+        <div class="screen">
+          <div class="top-row"><span class="left"></span><span class="title">VPNclient</span><span class="right">⋯</span></div>
+          <div class="stat-row">
+            <div class="stat"><div class="ico">↓</div><div class="v">12.4 MB/s</div></div>
+            <div class="stat"><div class="ico">↑</div><div class="v">3.1 MB/s</div></div>
+            <div class="stat"><div class="ico">⏱</div><div class="v">42 ms</div></div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:48px">
+            <div class="timer">00:14:32</div>
+            <div class="connect-wrap">
+              <div class="connect-btn on">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v8M5.6 7.6a8 8 0 1 0 12.8 0"/></svg>
+              </div>
+              <div class="conn-status" style="color:var(--brand-blue)">Подключено</div>
+            </div>
+          </div>
+          <div class="server-card" style="margin-bottom:108px">
+            <div class="meta">
+              <div class="label">Ваша локация</div>
+              <div class="name">Германия · Frankfurt</div>
+            </div>
+            <div class="flag">DE</div>
+          </div>
+          <div class="tabbar">
+            <div class="tab">Servers</div><div class="tab active">Home</div><div class="tab">Apps</div><div class="tab">Settings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SERVERS ═══════════════════════════════════ -->
+    <div class="frame-wrap">
+      <div class="frame-meta">
+        <b>Servers · with subscription strip</b>
+        <span class="tag">servers_page.dart</span>
+      </div>
+      <div class="device">
+        <div class="status-bar"><span>9:41</span><span class="icons">●●● ⌑</span></div>
+        <div class="screen">
+          <div class="top-row"><span class="left">‹</span><span class="title">Серверы</span><span class="right">+</span></div>
+          <div class="sub-strip">
+            <div class="sub-card active">
+              <div class="row1">☁ My Free Servers</div>
+              <div class="row2"><span>4 servers</span><span>Unlimited</span></div>
+            </div>
+            <div class="sub-card inactive">
+              <div class="row1" style="color:var(--muted)">☁ Hiddify Public</div>
+              <div class="row2" style="color:var(--muted)"><span>12 servers</span><span>5 days</span></div>
+            </div>
+            <div class="sub-card add">+</div>
+          </div>
+          <div class="search">🔍 Поиск по серверам</div>
+          <div class="group-label">Выбранный сервер</div>
+          <div class="row">
+            <div class="flag auto">⚡</div>
+            <div class="name">Авто-выбор</div>
+            <span class="ping fast">самый быстрый</span>
+            <span class="check">✓</span>
+          </div>
+          <div class="group-label" style="padding-top:14px">Все серверы</div>
+          <div class="row"><div class="flag">KZ</div><div class="name">Казахстан</div><span class="ping fast">48 ms</span><span style="color:var(--muted)">›</span></div>
+          <div class="row"><div class="flag">TR</div><div class="name">Турция</div><span class="ping med">142 ms</span><span style="color:var(--muted)">›</span></div>
+          <div class="row"><div class="flag">PL</div><div class="name">Польша</div><span class="ping slow">298 ms</span><span style="color:var(--muted)">›</span></div>
+          <div class="row"><div class="flag">DE</div><div class="name">Германия</div><span class="ping fast">64 ms</span><span style="color:var(--muted)">›</span></div>
+          <div class="tabbar">
+            <div class="tab active">Servers</div><div class="tab">Home</div><div class="tab">Apps</div><div class="tab">Settings</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SUBSCRIPTION IMPORT ═══════════════════════ -->
+    <div class="frame-wrap">
+      <div class="frame-meta">
+        <b>Subscription · Import (NEW)</b>
+        <span class="tag">subscription_import_page.dart</span>
+      </div>
+      <div class="device">
+        <div class="status-bar"><span>9:41</span><span class="icons">●●● ⌑</span></div>
+        <div class="screen">
+          <div class="top-row"><span class="left">×</span><span class="title">Add subscription</span><span class="right"></span></div>
+          <div class="seg" style="margin-top:8px">
+            <div class="opt active">URL</div>
+            <div class="opt">QR код</div>
+            <div class="opt">Файл</div>
+          </div>
+          <div class="field-label">Subscription URL</div>
+          <div class="url-box"><span class="typed">vless://c61daf3e-83ff-424f-a4ff-5bfcb46f0b30@server.example.com:443?encryption=none&security=reality&sni=yandex.ru#</span><span style="color:var(--muted)">My-server</span></div>
+          <div class="chip-row">
+            <span class="chip">📋 Вставить</span>
+            <span class="chip">⌗ Сканировать QR</span>
+          </div>
+          <div class="field-label">Display name</div>
+          <div class="input placeholder">Hiddify Public</div>
+          <div class="toggle-row" style="margin-top:14px">
+            <div class="label"><b>Auto-update</b><span>Refresh server list every 24h</span></div>
+            <div class="switch on"></div>
+          </div>
+          <div style="flex:1"></div>
+          <div class="toast">✓ Subscription imported · 12 servers available</div>
+          <button class="cta">Import subscription</button>
+          <div style="height:108px"></div>
+          <div class="tabbar"><div class="tab active">Servers</div><div class="tab">Home</div><div class="tab">Apps</div><div class="tab">Settings</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SUBSCRIPTION IMPORT (Loading state) ═══════════ -->
+    <div class="frame-wrap">
+      <div class="frame-meta">
+        <b>Subscription · Fetching state</b>
+        <span class="tag">_ImportState.fetching</span>
+      </div>
+      <div class="device">
+        <div class="status-bar"><span>9:41</span><span class="icons">●●● ⌑</span></div>
+        <div class="screen">
+          <div class="top-row"><span class="left">×</span><span class="title">Add subscription</span><span class="right"></span></div>
+          <div class="seg" style="margin-top:8px">
+            <div class="opt active">URL</div>
+            <div class="opt">QR код</div>
+            <div class="opt">Файл</div>
+          </div>
+          <div class="field-label">Subscription URL</div>
+          <div class="url-box"><span class="typed">https://sub.example.com/v2/abc123def456</span></div>
+          <div class="field-label" style="margin-top:14px">Display name</div>
+          <div class="input">My subscription</div>
+          <div class="toggle-row" style="margin-top:14px">
+            <div class="label"><b>Auto-update</b><span>Refresh server list every 24h</span></div>
+            <div class="switch on"></div>
+          </div>
+          <div style="flex:1"></div>
+          <div class="progress"></div>
+          <button class="cta disabled">Fetching servers…</button>
+          <div style="height:108px"></div>
+          <div class="tabbar"><div class="tab active">Servers</div><div class="tab">Home</div><div class="tab">Apps</div><div class="tab">Settings</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ APPS ═════════════════════════════════════ -->
+    <div class="frame-wrap">
+      <div class="frame-meta">
+        <b>Apps · Split tunneling (Bypass)</b>
+        <span class="tag">apps_page.dart</span>
+      </div>
+      <div class="device">
+        <div class="status-bar"><span>9:41</span><span class="icons">●●● ⌑</span></div>
+        <div class="screen">
+          <div class="top-row"><span class="left">‹</span><span class="title">Apps</span><span class="right">⋯</span></div>
+          <div class="seg">
+            <div class="opt">Off</div>
+            <div class="opt active">Bypass listed</div>
+            <div class="opt">Only listed</div>
+          </div>
+          <div class="search">🔍 Search apps</div>
+          <div class="row" style="margin-top:8px">
+            <div class="app-icon" style="background:linear-gradient(180deg,var(--brand-cyan),var(--brand-blue));color:#fff">⊞</div>
+            <div class="name">Все приложения</div>
+            <div class="switch"></div>
+          </div>
+          <div class="row"><div class="app-icon">T</div><div><div class="name">Telegram</div><div class="sub">org.telegram.messenger</div></div><div style="flex:1"></div><div class="switch on"></div></div>
+          <div class="row"><div class="app-icon">I</div><div><div class="name">Instagram</div><div class="sub">com.instagram.android</div></div><div style="flex:1"></div><div class="switch on"></div></div>
+          <div class="row"><div class="app-icon">T</div><div><div class="name">TikTok</div><div class="sub">com.zhiliaoapp.musically</div></div><div style="flex:1"></div><div class="switch"></div></div>
+          <div class="row"><div class="app-icon">X</div><div><div class="name">X (Twitter)</div><div class="sub">com.twitter.android</div></div><div style="flex:1"></div><div class="switch on"></div></div>
+          <div class="row"><div class="app-icon">Y</div><div><div class="name">YouTube</div><div class="sub">com.google.android.youtube</div></div><div style="flex:1"></div><div class="switch"></div></div>
+          <div class="tabbar"><div class="tab">Servers</div><div class="tab">Home</div><div class="tab active">Apps</div><div class="tab">Settings</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ SETTINGS ════════════════════════════════ -->
+    <div class="frame-wrap">
+      <div class="frame-meta">
+        <b>Settings · with locale toggle</b>
+        <span class="tag">settings_page.dart</span>
+      </div>
+      <div class="device">
+        <div class="status-bar"><span>9:41</span><span class="icons">●●● ⌑</span></div>
+        <div class="screen">
+          <div class="top-row"><span class="left">‹</span><span class="title">Настройки</span><span class="right"></span></div>
+          <div class="profile">
+            <div class="avatar"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></div>
+            <div style="flex:1"><div class="name">Anonymous</div><div class="plan">ID 2485926342 · Free plan</div></div>
+            <span style="color:var(--muted)">›</span>
+          </div>
+          <div class="section-label">Connection</div>
+          <div class="group">
+            <div class="item"><div class="ico">⚙</div><div class="label">Серверы и подписки</div><span class="trail">›</span></div>
+            <div class="group-divider"></div>
+            <div class="item"><div class="ico">⇄</div><div class="label">Протокол</div><span class="trail">Auto ›</span></div>
+            <div class="group-divider"></div>
+            <div class="item"><div class="ico">🛡</div><div class="label">Kill switch<br><span style="font-size:12px;color:var(--muted)">Block traffic if VPN drops</span></div><div class="switch on"></div></div>
+          </div>
+          <div class="section-label">Appearance</div>
+          <div class="group">
+            <div class="item"><div class="ico">◐</div><div class="label">Тема</div><span class="trail">Светлая ›</span></div>
+            <div class="group-divider"></div>
+            <div class="item"><div class="ico">A</div><div class="label">Язык</div><span class="trail">Русский ›</span></div>
+          </div>
+          <div class="section-label">Subscription</div>
+          <div class="group">
+            <div class="item"><div class="ico">★</div><div class="label">Upgrade to Pro</div><span class="pro-pill">Pro</span></div>
+            <div class="group-divider"></div>
+            <div class="item"><div class="ico">%</div><div class="label">Промо-код</div><span class="trail">›</span></div>
+          </div>
+          <button class="reset-btn">⟲  Сбросить настройки</button>
+          <div style="height:120px"></div>
+          <div class="tabbar"><div class="tab">Servers</div><div class="tab">Home</div><div class="tab">Apps</div><div class="tab active">Settings</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ DARK MAIN ════════════════════════════════ -->
+    <div class="frame-wrap">
+      <div class="frame-meta">
+        <b>Main · Dark theme</b>
+        <span class="tag">AppTheme.dark()</span>
+      </div>
+      <div class="device dark">
+        <div class="status-bar"><span>9:41</span><span class="icons">●●● ⌑</span></div>
+        <div class="screen">
+          <div class="top-row"><span class="left"></span><span class="title">VPNclient</span><span class="right">⋯</span></div>
+          <div class="stat-row">
+            <div class="stat"><div class="ico">↓</div><div class="v">12.4 MB/s</div></div>
+            <div class="stat"><div class="ico">↑</div><div class="v">3.1 MB/s</div></div>
+            <div class="stat"><div class="ico">⏱</div><div class="v">42 ms</div></div>
+          </div>
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:48px">
+            <div class="timer">00:14:32</div>
+            <div class="connect-wrap">
+              <div class="connect-btn on">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v8M5.6 7.6a8 8 0 1 0 12.8 0"/></svg>
+              </div>
+              <div class="conn-status" style="color:var(--brand-cyan)">Подключено</div>
+            </div>
+          </div>
+          <div class="server-card" style="margin-bottom:108px">
+            <div class="meta"><div class="label">Ваша локация</div><div class="name">Германия · Frankfurt</div></div>
+            <div class="flag">DE</div>
+          </div>
+          <div class="tabbar"><div class="tab">Servers</div><div class="tab active">Home</div><div class="tab">Apps</div><div class="tab">Settings</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TABLET ═══════════════════════════════════ -->
+    <div class="frame-wrap tablet-wrap">
+      <div class="frame-meta">
+        <b>Tablet / Desktop · Sidebar rail + Servers</b>
+        <span class="tag">responsive_scaffold.dart</span>
+      </div>
+      <div class="tablet">
+        <div class="rail">
+          <div class="brand"><div class="logo"></div><b>VPNclient</b></div>
+          <div class="nav-item active">
+            <svg class="ic" viewBox="0 0 24 24" fill="currentColor"><path d="M4 6h16v3H4zM4 11h16v3H4zM4 16h16v3H4z"/></svg>
+            Servers
+          </div>
+          <div class="nav-item">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 4 6v6c0 5 3.4 9.3 8 10 4.6-.7 8-5 8-10V6l-8-4z"/></svg>
+            Home
+          </div>
+          <div class="nav-item">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>
+            Apps
+          </div>
+          <div class="nav-item">
+            <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"/></svg>
+            Settings
+          </div>
+          <div style="flex:1"></div>
+          <div class="nav-item" style="opacity:0.6"><div class="logo" style="width:24px;height:24px"></div>Anonymous</div>
+        </div>
+        <div class="desktop-body">
+          <h2>Servers</h2>
+          <div class="desktop-grid">
+            <div>
+              <div class="sub-card active" style="width:100%;height:auto;margin-bottom:12px">
+                <div class="row1">☁ My Free Servers</div>
+                <div class="row2" style="margin-top:18px"><span>4 servers</span><span>Unlimited</span></div>
+              </div>
+              <div class="sub-card inactive" style="width:100%;height:auto;margin-bottom:12px">
+                <div class="row1" style="color:var(--muted)">☁ Hiddify Public</div>
+                <div class="row2" style="margin-top:18px"><span>12 servers</span><span>5 days</span></div>
+              </div>
+              <div class="sub-card add" style="width:100%;height:60px"><span>+ Add subscription</span></div>
+            </div>
+            <div>
+              <div class="search">🔍 Search servers</div>
+              <div class="group-label">Selected</div>
+              <div class="row"><div class="flag auto">⚡</div><div class="name">Auto-select</div><span class="ping fast">fastest</span><span class="check">✓</span></div>
+              <div class="group-label" style="padding-top:14px">All servers</div>
+              <div class="row"><div class="flag">DE</div><div class="name">Germany · Frankfurt</div><span class="ping fast">64 ms</span><span style="color:var(--muted)">›</span></div>
+              <div class="row"><div class="flag">NL</div><div class="name">Netherlands · Amsterdam</div><span class="ping fast">72 ms</span><span style="color:var(--muted)">›</span></div>
+              <div class="row"><div class="flag">KZ</div><div class="name">Kazakhstan · Almaty</div><span class="ping fast">48 ms</span><span style="color:var(--muted)">›</span></div>
+              <div class="row"><div class="flag">TR</div><div class="name">Turkey · Istanbul</div><span class="ping med">142 ms</span><span style="color:var(--muted)">›</span></div>
+              <div class="row"><div class="flag">PL</div><div class="name">Poland · Warsaw</div><span class="ping slow">298 ms</span><span style="color:var(--muted)">›</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
